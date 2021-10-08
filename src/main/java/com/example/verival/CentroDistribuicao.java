@@ -26,12 +26,12 @@ public class CentroDistribuicao {
 
         this.tanAditivo = tAditivo;   
         this.tanGasolina = tGasolina;
-        this.tanAlcool2 = this.tanAlcool1 = (int)(Math.round(totalAlcool / 2.0));
+        this.tanAlcool2 = this.tanAlcool1 = totalAlcool / 2;
         defineSituacao();
     }
 
     public void defineSituacao() {
-        if (tanAditivo >= MAX_ADITIVO * 0.5 && tanGasolina >= MAX_GASOLINA * 0.5 && (tanAlcool1 + tanAlcool2)  >= MAX_ALCOOL * 0.5 ) {
+        if (tanAditivo >= MAX_ADITIVO * 0.5 && tanGasolina >= MAX_GASOLINA * 0.5 && (tanAlcool1 + tanAlcool2) >= MAX_ALCOOL * 0.5 ) {
             situacao = SITUACAO.NORMAL;
         } else if (tanAditivo < MAX_ADITIVO * 0.25 || tanGasolina < MAX_GASOLINA * 0.25  || (tanAlcool1 + tanAlcool2) < MAX_ALCOOL * 0.25) {
             situacao = SITUACAO.EMERGENCIA;
@@ -101,16 +101,17 @@ public class CentroDistribuicao {
             }
             if(situacao == SITUACAO.SOBRAVISO){
                 qtdade /= 2;
+                if(qtdade == 0)
+                    return new int[] {-14};
             }
         }
-        
-        qtdade *= 100;
         boolean conseguiuCombustivel = consegueCombustivel(qtdade, tipoPosto);
         int[] combustivelTanques = conseguiuCombustivel ? new int[] {tanAditivo, tanGasolina, tanAlcool1, tanAlcool2} : new int[]{-21};
         
         return combustivelTanques;
     }
     private boolean consegueCombustivel(int qtdadeGas, TIPOPOSTO tipoPosto){
+        qtdadeGas *= 100;
         int aditivo = (int) (qtdadeGas * 0.05);
         int gasolina = (int) (qtdadeGas * 0.7); 
         int alcool = (int) (qtdadeGas * 0.25);
@@ -132,7 +133,6 @@ public class CentroDistribuicao {
     private void retiraCombustivel(int aditivo, int gasolina, int alcool) {
         tanAditivo *= 100;
         tanGasolina *= 100;
-
         tanAditivo -= aditivo;
         tanGasolina -= gasolina;
         int totalAlcool = (tanAlcool2 + tanAlcool1) * 100 - alcool;

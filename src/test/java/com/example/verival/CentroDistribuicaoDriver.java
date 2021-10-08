@@ -3,11 +3,16 @@ package com.example.verival;
 import java.util.Random;
 
 import com.example.verival.CentroDistribuicao.SITUACAO;
+import com.example.verival.CentroDistribuicao.TIPOPOSTO;
 
 import org.junit.Assert;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.test.context.SpringBootTest;
+
 
 @SpringBootTest
 class CentroDistribuicaoDriver {
@@ -24,8 +29,8 @@ class CentroDistribuicaoDriver {
 
 			centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO, CentroDistribuicao.MAX_GASOLINA, tAlcoolCheio, tAlcoolCheio);
 			Assert.assertEquals(SITUACAO.NORMAL, centro.getSituacao());
-		}	
-		
+		}
+
 		@RepeatedTest(10)
 		@Test
 		void defineSituacaoInPointNormal() {
@@ -34,21 +39,21 @@ class CentroDistribuicaoDriver {
 			centro = new CentroDistribuicao(valoresTeste[0], valoresTeste[1], valoresTeste[2], valoresTeste[3]);
 			Assert.assertEquals(SITUACAO.NORMAL, centro.getSituacao());
 		}
-		
+
 		@Test
 		void defineSituacaoOffPointNormal() {
 			int[] valoresTeste =  GetValoresTesteLimite(SITUACAO.SOBRAVISO);
 			int tAlcoolMetade = CentroDistribuicao.MAX_ALCOOL / 2;
 			centro = new CentroDistribuicao(valoresTeste[0], CentroDistribuicao.MAX_GASOLINA, tAlcoolMetade, tAlcoolMetade);
 			Assert.assertNotEquals(CentroDistribuicao.SITUACAO.NORMAL, centro.getSituacao());
-			
+
 			centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO, valoresTeste[1], tAlcoolMetade, tAlcoolMetade);
 			Assert.assertNotEquals(SITUACAO.NORMAL, centro.getSituacao());
-	
+
 			centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO, CentroDistribuicao.MAX_GASOLINA, valoresTeste[2], valoresTeste[3]);
 			Assert.assertNotEquals(SITUACAO.NORMAL, centro.getSituacao());
 		}
-		
+
 		@RepeatedTest(10)
 		@Test
 		void defineSituacaoOutPointNormal() {
@@ -69,13 +74,13 @@ class CentroDistribuicaoDriver {
 
 			centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2 - 1, CentroDistribuicao.MAX_GASOLINA, tAlcoolCheio, tAlcoolCheio);
 			Assert.assertEquals(SITUACAO.SOBRAVISO, centro.getSituacao());
-			
+
 			centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO, CentroDistribuicao.MAX_GASOLINA / 2 - 1, tAlcoolCheio, tAlcoolCheio);
 			Assert.assertEquals(SITUACAO.SOBRAVISO, centro.getSituacao());
-			
+
 			centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO, CentroDistribuicao.MAX_GASOLINA, tanquesAlcool[0], tanquesAlcool[1]);
 			Assert.assertEquals(SITUACAO.SOBRAVISO, centro.getSituacao());
-		}	
+		}
 
 		@RepeatedTest(10)
 		@Test
@@ -84,16 +89,16 @@ class CentroDistribuicaoDriver {
 			int tAlcoolCheio = CentroDistribuicao.MAX_ALCOOL / 2;
 			System.out.printf("defineSituacaoInPointSobreaviso():\n\taditivo: "+valoresTeste[0]+"\n\tgasolina: "+valoresTeste[1]+"\n\talcool1: "
 				+valoresTeste[2]+"\n\talcool2: "+valoresTeste[3]+"\n\n");
-			
+
 			centro = new CentroDistribuicao(valoresTeste[0], CentroDistribuicao.MAX_GASOLINA / 2, tAlcoolCheio, tAlcoolCheio);
 			Assert.assertEquals(SITUACAO.SOBRAVISO, centro.getSituacao());
-			
+
 			centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2 - 1, valoresTeste[1], tAlcoolCheio, tAlcoolCheio);
 			Assert.assertEquals(SITUACAO.SOBRAVISO, centro.getSituacao());
-			
+
 			centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2 - 1, CentroDistribuicao.MAX_GASOLINA / 2, valoresTeste[2], tAlcoolCheio);
 			Assert.assertEquals(SITUACAO.SOBRAVISO, centro.getSituacao());
-			
+
 			centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2 - 1, CentroDistribuicao.MAX_GASOLINA / 2, tAlcoolCheio, valoresTeste[3]);
 			Assert.assertEquals(SITUACAO.SOBRAVISO, centro.getSituacao());
 		}
@@ -103,7 +108,7 @@ class CentroDistribuicaoDriver {
 			int tAlcoolCheio = CentroDistribuicao.MAX_ALCOOL / 2;
 			centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2, CentroDistribuicao.MAX_GASOLINA / 2, tAlcoolCheio / 2, tAlcoolCheio / 2);
 			Assert.assertNotEquals(SITUACAO.SOBRAVISO, centro.getSituacao());
-			
+
 			centro = new CentroDistribuicao((int)(CentroDistribuicao.MAX_ADITIVO * 0.25), (int)(CentroDistribuicao.MAX_GASOLINA * 0.25), (int)(tAlcoolCheio * 0.25), (int)(tAlcoolCheio * 0.25));
 			Assert.assertNotEquals(SITUACAO.SOBRAVISO, centro.getSituacao());
 		}
@@ -131,16 +136,16 @@ class CentroDistribuicaoDriver {
 			valoresTeste =  GetValoresTesteLimite(SITUACAO.NORMAL);
 			System.out.printf("defineSituacaoOutPointSobreaviso()\n\tSITUACAO.NORMAL:\n\taditivo: "+valoresTeste[0]+"\n\tgasolina: "+valoresTeste[1]+"\n\talcool1: "
 				+valoresTeste[2]+"\n\talcool2: "+valoresTeste[3]+"\n\n");
-			
+
 				centro = new CentroDistribuicao(valoresTeste[0], CentroDistribuicao.MAX_GASOLINA / 2, tAlcoolCheio / 2, tAlcoolCheio / 2);
 				Assert.assertNotEquals(SITUACAO.SOBRAVISO, centro.getSituacao());
-	
+
 				centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2, valoresTeste[1], tAlcoolCheio / 2, tAlcoolCheio / 2);
 				Assert.assertNotEquals(SITUACAO.SOBRAVISO, centro.getSituacao());
-	
+
 				centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2, CentroDistribuicao.MAX_GASOLINA / 2, valoresTeste[2], tAlcoolCheio / 2);
 				Assert.assertNotEquals(SITUACAO.SOBRAVISO, centro.getSituacao());
-	
+
 				centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2, CentroDistribuicao.MAX_GASOLINA / 2, tAlcoolCheio / 2, valoresTeste[3]);
 				Assert.assertNotEquals(SITUACAO.SOBRAVISO, centro.getSituacao());
 		}
@@ -154,14 +159,14 @@ class CentroDistribuicaoDriver {
 
 			centro = new CentroDistribuicao((int)((CentroDistribuicao.MAX_ADITIVO * 0.25)) - 1, CentroDistribuicao.MAX_GASOLINA, MAX_ALCOOL_TANQUE, MAX_ALCOOL_TANQUE);
 			Assert.assertEquals(SITUACAO.EMERGENCIA, centro.getSituacao());
-			
+
 			centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO,(int)((CentroDistribuicao.MAX_GASOLINA * 0.25)) - 1, MAX_ALCOOL_TANQUE, MAX_ALCOOL_TANQUE);
 			Assert.assertEquals(SITUACAO.EMERGENCIA, centro.getSituacao());
-			
+
 			centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO, CentroDistribuicao.MAX_GASOLINA, tanquesAlcool[0], tanquesAlcool[1]);
 			Assert.assertEquals(SITUACAO.EMERGENCIA, centro.getSituacao());
-		}	
-		
+		}
+
 		@Test
 		@RepeatedTest(10)
 		void defineSituacaoOutPointEmergencia() {
@@ -185,24 +190,24 @@ class CentroDistribuicaoDriver {
 			valoresTeste =  GetValoresTesteLimite(SITUACAO.NORMAL);
 			System.out.printf("defineSituacaoOutPointEmergencia()\n\tSITUACAO.NORMAL:\n\taditivo: "+valoresTeste[0]+"\n\tgasolina: "+valoresTeste[1]+"\n\talcool1: "
 				+valoresTeste[2]+"\n\talcool2: "+valoresTeste[3]+"\n\n");
-			
+
 				centro = new CentroDistribuicao(valoresTeste[0], CentroDistribuicao.MAX_GASOLINA / 2, tAlcoolCheio / 2, tAlcoolCheio / 2);
 				Assert.assertNotEquals(SITUACAO.EMERGENCIA, centro.getSituacao());
-	
+
 				centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2, valoresTeste[1], tAlcoolCheio / 2, tAlcoolCheio / 2);
 				Assert.assertNotEquals(SITUACAO.EMERGENCIA, centro.getSituacao());
-	
+
 				centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2, CentroDistribuicao.MAX_GASOLINA / 2, valoresTeste[2], tAlcoolCheio / 2);
 				Assert.assertNotEquals(SITUACAO.EMERGENCIA, centro.getSituacao());
-	
+
 				centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2, CentroDistribuicao.MAX_GASOLINA / 2, tAlcoolCheio / 2, valoresTeste[3]);
 				Assert.assertNotEquals(SITUACAO.EMERGENCIA, centro.getSituacao());
 		}
-		
+
 		@Test
 		void defineSituacaoOffPointEmergencia() {
 			int tAlcoolCheio = CentroDistribuicao.MAX_ALCOOL / 2;
-			
+
 			centro = new CentroDistribuicao((int)(CentroDistribuicao.MAX_ADITIVO * 0.25) + 1, (int)(CentroDistribuicao.MAX_GASOLINA * 0.25) + 1, (int)(tAlcoolCheio * 0.25) + 1, (int)(tAlcoolCheio * 0.25) + 1);
 			Assert.assertNotEquals(SITUACAO.EMERGENCIA, centro.getSituacao());
 		}
@@ -214,23 +219,23 @@ class CentroDistribuicaoDriver {
 			int tAlcoolCheio = CentroDistribuicao.MAX_ALCOOL / 2;
 			System.out.printf("defineSituacaoInPointEmergencia():\n\taditivo: "+valoresTeste[0]+"\n\tgasolina: "+valoresTeste[1]+"\n\talcool1: "
 				+valoresTeste[2]+"\n\talcool2: "+valoresTeste[3]+"\n\n");
-			
+
 			centro = new CentroDistribuicao(valoresTeste[0], CentroDistribuicao.MAX_GASOLINA / 2, tAlcoolCheio, tAlcoolCheio);
 			Assert.assertEquals(SITUACAO.EMERGENCIA, centro.getSituacao());
-			
+
 			centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2 - 1, valoresTeste[1], tAlcoolCheio, tAlcoolCheio);
 			Assert.assertEquals(SITUACAO.EMERGENCIA, centro.getSituacao());
-			
+
 			centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2 - 1, CentroDistribuicao.MAX_GASOLINA / 2, valoresTeste[2], (int)(tAlcoolCheio * 0.25));
 			Assert.assertEquals(SITUACAO.EMERGENCIA, centro.getSituacao());
-			
+
 			centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2 - 1, CentroDistribuicao.MAX_GASOLINA / 2, (int)(tAlcoolCheio * 0.25), valoresTeste[3]);
 			Assert.assertEquals(SITUACAO.EMERGENCIA, centro.getSituacao());
 		}
-		// //#endregion
+		//#endregion
 
 	//#endregion
-	//#region Teste basedo em Modelos
+	//#region Teste baseado em Modelos
 	@Test
 	void recebeGasolinaQtdadeValidaSituacaoNormal() {
 		centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2, CentroDistribuicao.MAX_GASOLINA / 2, CentroDistribuicao.MAX_ALCOOL / 2, CentroDistribuicao.MAX_ALCOOL / 2);
@@ -257,7 +262,7 @@ class CentroDistribuicaoDriver {
 
 	@Test
 	void recebeGasolinaQtdadeValidaMudaSituacao() {
-		final int gasolina = CentroDistribuicao.MAX_GASOLINA / 2 -1;
+		final int gasolina = CentroDistribuicao.MAX_GASOLINA / 2 - 1;
 		final int alcool = CentroDistribuicao.MAX_ALCOOL / 2;
 		final int aditivo = CentroDistribuicao.MAX_ADITIVO / 2;
 		final int qtdadeACompletar = 1;
@@ -378,6 +383,76 @@ class CentroDistribuicaoDriver {
 		final int qtRetorno = centro.recebeAditivo(-100);
 		Assert.assertEquals(-1, qtRetorno);
 	}
+
+	@ParameterizedTest
+	@ValueSource(shorts = {1, 2, 3, 4, 5, 6, 7, 8 ,9, 10, 25, 50, 75, 100, 1000})
+	void encomendaCombustivelQtdataValidaSituacaoNormalPostoComum(short litrosCombustivel){
+		final short MAX_ALCOOL_TANQUE = CentroDistribuicao.MAX_ALCOOL / 2;
+		int[] misturaRecebida;
+		short[] misturaEsperada = new short[3];
+		centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO, CentroDistribuicao.MAX_GASOLINA, MAX_ALCOOL_TANQUE , MAX_ALCOOL_TANQUE);
+		misturaEsperada[0] = (short)(CentroDistribuicao.MAX_ADITIVO - litrosCombustivel * 0.05);
+		misturaEsperada[1] = (short)(CentroDistribuicao.MAX_GASOLINA - litrosCombustivel * 0.7);
+		misturaEsperada[2] = (short)(MAX_ALCOOL_TANQUE - litrosCombustivel * 0.125);
+
+		misturaRecebida = centro.encomendaCombustivel(litrosCombustivel, TIPOPOSTO.COMUM);
+
+		Assert.assertEquals(misturaRecebida.length, 4);
+		Assert.assertEquals(misturaRecebida[0], misturaEsperada[0]);
+		Assert.assertEquals(misturaRecebida[1], misturaEsperada[1]);
+		Assert.assertEquals(misturaRecebida[2], misturaEsperada[2]);
+		Assert.assertEquals(misturaRecebida[3], misturaEsperada[2]);
+	}
+	@ParameterizedTest
+	@ValueSource(shorts = {2, 3, 4, 5, 6, 7, 8 ,9, 10, 25, 50, 75, 100, 1000})
+	void encomendaCombustivelQtValidaSituacaoSobreavisoPostoComum(short litrosCombustivel){
+		final short ADITIVO_TANQUE = CentroDistribuicao.MAX_ADITIVO / 2 - 1;
+		final short GASOLINA_TANQUE = CentroDistribuicao.MAX_GASOLINA / 2 - 1;
+		final short MAX_ALCOOL_TANQUE = CentroDistribuicao.MAX_ALCOOL / 2;
+		final short ALCOOL_TANQUE = MAX_ALCOOL_TANQUE - 1;
+		int[] misturaRecebida;
+		short[] misturaEsperada = new short[3];
+		short litrosDivido = (short)(litrosCombustivel / 2);
+		centro = new CentroDistribuicao(ADITIVO_TANQUE, GASOLINA_TANQUE, ALCOOL_TANQUE , ALCOOL_TANQUE);
+		misturaEsperada[0] = (short)(ADITIVO_TANQUE - litrosDivido * 0.05);
+		misturaEsperada[1] = (short)(GASOLINA_TANQUE - litrosDivido * 0.7);
+		misturaEsperada[2] = (short)(ALCOOL_TANQUE - litrosDivido * 0.125);
+
+		misturaRecebida = centro.encomendaCombustivel(litrosCombustivel, TIPOPOSTO.COMUM);
+
+		Assert.assertEquals(misturaRecebida.length, 4);
+		Assert.assertEquals(misturaRecebida[0], misturaEsperada[0]);
+		Assert.assertEquals(misturaRecebida[1], misturaEsperada[1]);
+		Assert.assertEquals(misturaRecebida[2], misturaEsperada[2]);
+		Assert.assertEquals(misturaRecebida[3], misturaEsperada[2]);
+	}
+
+	@Test
+	void encomendaCombustivelQtValidaSituacaoEmergenciaPostoComum(){
+		final short ADITIVO_TANQUE = (short)(CentroDistribuicao.MAX_ADITIVO * 0.25);
+		final short ALCOOL_TANQUE  = (short)CentroDistribuicao.MAX_ALCOOL / 2;
+		int[] misturaRecebida;
+		byte litrosCombustivel = 1;
+		short[] misturaEsperada = new short[] {-14};
+		centro = new CentroDistribuicao(ADITIVO_TANQUE, CentroDistribuicao.MAX_GASOLINA, ALCOOL_TANQUE, ALCOOL_TANQUE);
+		misturaRecebida = centro.encomendaCombustivel(litrosCombustivel, TIPOPOSTO.COMUM);
+
+		Assert.assertEquals(misturaRecebida.length, 1);
+		Assert.assertEquals(misturaRecebida[0], misturaEsperada[0]);
+	}
+	@Test
+	void encomendaCombustivelQtInvalidaSituacao(){
+		final short ADITIVO_TANQUE = (short)(CentroDistribuicao.MAX_ADITIVO * 0.25);
+		final short ALCOOL_TANQUE  = (short)CentroDistribuicao.MAX_ALCOOL / 2;
+		int[] misturaRecebida;
+		byte litrosCombustivel = -1;
+		short[] misturaEsperada = new short[] {-7};
+		centro = new CentroDistribuicao(ADITIVO_TANQUE, CentroDistribuicao.MAX_GASOLINA, ALCOOL_TANQUE, ALCOOL_TANQUE);
+		misturaRecebida = centro.encomendaCombustivel(litrosCombustivel, TIPOPOSTO.COMUM);
+
+		Assert.assertEquals(misturaRecebida.length, 1);
+		Assert.assertEquals(misturaRecebida[0], misturaEsperada[0]);
+	}
 	//#endregion
 	//#region métodos úteis
 	private int[] GetValoresTesteLimite(SITUACAO situacao){
@@ -394,11 +469,11 @@ class CentroDistribuicaoDriver {
 			maxAlcool = MAX_ALCOOL_TANQUE;
 		}
 		else if(situacao == SITUACAO.SOBRAVISO){
-			minAditivo = (int) (CentroDistribuicao.MAX_ADITIVO * 0.25);
+			minAditivo = (int) (CentroDistribuicao.MAX_ADITIVO * 0.25) + 1;
 			maxAditivo = CentroDistribuicao.MAX_ADITIVO / 2 - 1;
-			minGasolina = (int) (CentroDistribuicao.MAX_GASOLINA * 0.25);
+			minGasolina = (int) (CentroDistribuicao.MAX_GASOLINA * 0.25) + 1;
 			maxGasolina = CentroDistribuicao.MAX_GASOLINA / 2 - 1;
-			minAlcool = (int) (MAX_ALCOOL_TANQUE * 0.25);
+			minAlcool = (int) (MAX_ALCOOL_TANQUE * 0.25) + 1;
 			maxAlcool = MAX_ALCOOL_TANQUE / 2 - 1;
 		}
 		else{
@@ -416,11 +491,11 @@ class CentroDistribuicaoDriver {
 	}
 	private int[] valoresQueResultamOEsperado(Random gerador, int minimo, int maximo){
 		int[] valores = {gerador.ints(minimo, maximo).findAny().getAsInt(), gerador.ints(minimo, maximo).findAny().getAsInt()};
-		while((valores[0] + valores[1]) / 2.0 > maximo){
+		while((valores[0] + valores[1]) / 2 > maximo){
 			valores[0] = gerador.ints(minimo, maximo).findAny().getAsInt();
 			valores[1] = gerador.ints(minimo, maximo).findAny().getAsInt();
 		}
 		return valores;
 	}
-	// //#endregion 
+	// //#endregion
 }
