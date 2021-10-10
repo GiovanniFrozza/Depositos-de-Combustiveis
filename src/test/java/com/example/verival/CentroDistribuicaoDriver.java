@@ -1,5 +1,6 @@
 package com.example.verival;
 
+import java.security.InvalidParameterException;
 import java.util.Random;
 
 import com.example.verival.CentroDistribuicao.SITUACAO;
@@ -9,7 +10,6 @@ import org.junit.Assert;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -234,8 +234,20 @@ class CentroDistribuicaoDriver {
 		}
 		//#endregion
 
+		//#endregion
 	//#endregion
-	//#region Teste baseado em Modelos
+	//#region Teste baseado em Modelos e Teste de partição por categoria
+	@Test
+	void centroDistribuicaoJogaExcecaoBaseadoNoLimiteDosTanques(){
+		Assert.assertThrows(InvalidParameterException.class, () -> new CentroDistribuicao(-1, 0, 0, 0));
+		Assert.assertThrows(InvalidParameterException.class, () -> new CentroDistribuicao(0, -1, 0, 0));
+		Assert.assertThrows(InvalidParameterException.class, () -> new CentroDistribuicao(0, 0, -1, 0));
+		Assert.assertThrows(InvalidParameterException.class, () -> new CentroDistribuicao(0, 0, 0, -1));
+		Assert.assertThrows(InvalidParameterException.class, () -> new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO + 1, 0, 0, 0));
+		Assert.assertThrows(InvalidParameterException.class, () -> new CentroDistribuicao(0, CentroDistribuicao.MAX_GASOLINA + 1, 0, 0));
+		Assert.assertThrows(InvalidParameterException.class, () -> new CentroDistribuicao(0, 0, CentroDistribuicao.MAX_ALCOOL + 1, 0));
+		Assert.assertThrows(InvalidParameterException.class, () -> new CentroDistribuicao(0, 0, 0, CentroDistribuicao.MAX_ALCOOL + 1));
+	}
 	@Test
 	void recebeGasolinaQtdadeValidaSituacaoNormal() {
 		centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2, CentroDistribuicao.MAX_GASOLINA / 2, CentroDistribuicao.MAX_ALCOOL / 2, CentroDistribuicao.MAX_ALCOOL / 2);
@@ -254,7 +266,7 @@ class CentroDistribuicaoDriver {
 		centro = new CentroDistribuicao(0, (int)(CentroDistribuicao.MAX_GASOLINA * 0.75), 0, 0);
 		final int gasolinaInicial = centro.getTanGasolina();
 		final int qtdadeACompletar = (int)(CentroDistribuicao.MAX_GASOLINA  * 0.25);
-		final int qtRetorno = centro.recebeGasolina(qtdadeACompletar +  100);
+		final int qtRetorno = centro.recebeGasolina(qtdadeACompletar + 100);
 
 		Assert.assertEquals(qtdadeACompletar, qtRetorno);
 		Assert.assertEquals(gasolinaInicial + qtdadeACompletar, centro.getTanGasolina());
@@ -385,75 +397,195 @@ class CentroDistribuicaoDriver {
 	}
 
 	@ParameterizedTest
-	@ValueSource(shorts = {1, 2, 3, 4, 5, 6, 7, 8 ,9, 10, 25, 50, 75, 100, 1000})
-	void encomendaCombustivelQtdataValidaSituacaoNormalPostoComum(short litrosCombustivel){
-		final short MAX_ALCOOL_TANQUE = CentroDistribuicao.MAX_ALCOOL / 2;
-		int[] misturaRecebida;
-		short[] misturaEsperada = new short[3];
-		centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO, CentroDistribuicao.MAX_GASOLINA, MAX_ALCOOL_TANQUE , MAX_ALCOOL_TANQUE);
-		misturaEsperada[0] = (short)(CentroDistribuicao.MAX_ADITIVO - litrosCombustivel * 0.05);
-		misturaEsperada[1] = (short)(CentroDistribuicao.MAX_GASOLINA - litrosCombustivel * 0.7);
-		misturaEsperada[2] = (short)(MAX_ALCOOL_TANQUE - litrosCombustivel * 0.125);
-
-		misturaRecebida = centro.encomendaCombustivel(litrosCombustivel, TIPOPOSTO.COMUM);
-
-		Assert.assertEquals(misturaRecebida.length, 4);
-		Assert.assertEquals(misturaRecebida[0], misturaEsperada[0]);
-		Assert.assertEquals(misturaRecebida[1], misturaEsperada[1]);
-		Assert.assertEquals(misturaRecebida[2], misturaEsperada[2]);
-		Assert.assertEquals(misturaRecebida[3], misturaEsperada[2]);
+	@ValueSource(ints = {1, 2, 3, 4, 5, 6, 7, 8 , 9, 10, 25, 50, 75, 100, 1000})
+	void encomendaCombustivelQtValidaSNormalAdquireMistura(int litrosCombustivel){
+		final int MAX_ALCOOL_TANQUE = CentroDistribuicao.MAX_ALCOOL / 2;
+		int[][] misturaRecebida = new int[2][4];
+		int[] misturaEsperada   = new int[3];
+		SITUACAO[] situacoes =  new SITUACAO[2];
+		CentroDistribuicao centroPComum = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO, CentroDistribuicao.MAX_GASOLINA, MAX_ALCOOL_TANQUE, MAX_ALCOOL_TANQUE);
+		CentroDistribuicao centroPEstrategico = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO, CentroDistribuicao.MAX_GASOLINA, MAX_ALCOOL_TANQUE, MAX_ALCOOL_TANQUE);
+		misturaEsperada[0] = (int)(CentroDistribuicao.MAX_ADITIVO - litrosCombustivel * 0.05);
+		misturaEsperada[1] = (int)(CentroDistribuicao.MAX_GASOLINA - litrosCombustivel * 0.7);
+		misturaEsperada[2] = (int)(MAX_ALCOOL_TANQUE - litrosCombustivel * 0.125);
+		situacoes[0] = centroPComum.getSituacao();
+		situacoes[1] = centroPEstrategico.getSituacao();
+		misturaRecebida[0] = centroPComum.encomendaCombustivel(litrosCombustivel, TIPOPOSTO.COMUM);
+		misturaRecebida[1] = centroPEstrategico.encomendaCombustivel(litrosCombustivel, TIPOPOSTO.ESTRATEGICO);
+		
+		//TIPOPOSTO.COMMM
+		Assert.assertEquals(SITUACAO.NORMAL, situacoes[0]);
+		Assert.assertEquals(4, misturaRecebida[0].length);
+		Assert.assertEquals(misturaEsperada[0], misturaRecebida[0][0]);
+		Assert.assertEquals(misturaEsperada[1], misturaRecebida[0][1]);
+		Assert.assertEquals(misturaEsperada[2], misturaRecebida[0][2]);
+		Assert.assertEquals(misturaEsperada[2], misturaRecebida[0][3]);	
+		//TIPOPOSTO.ESTRATEGICO
+		Assert.assertEquals(SITUACAO.NORMAL, situacoes[1]);
+		Assert.assertEquals(4, misturaRecebida[1].length);
+		Assert.assertEquals(misturaEsperada[0], misturaRecebida[1][0]);
+		Assert.assertEquals(misturaEsperada[1], misturaRecebida[1][1]);
+		Assert.assertEquals(misturaEsperada[2], misturaRecebida[1][2]);
+		Assert.assertEquals(misturaEsperada[2], misturaRecebida[1][3]);
 	}
+	
 	@ParameterizedTest
-	@ValueSource(shorts = {2, 3, 4, 5, 6, 7, 8 ,9, 10, 25, 50, 75, 100, 1000})
-	void encomendaCombustivelQtValidaSituacaoSobreavisoPostoComum(short litrosCombustivel){
-		final short ADITIVO_TANQUE = CentroDistribuicao.MAX_ADITIVO / 2 - 1;
-		final short GASOLINA_TANQUE = CentroDistribuicao.MAX_GASOLINA / 2 - 1;
-		final short MAX_ALCOOL_TANQUE = CentroDistribuicao.MAX_ALCOOL / 2;
-		final short ALCOOL_TANQUE = MAX_ALCOOL_TANQUE - 1;
+	@ValueSource(ints = {2, 3, 4, 5, 6, 7, 8 , 9, 10, 25, 50, 75, 100, 1000})
+	void encomendaCombustivelQtValidaSSobreavisoPComumAdquireMetadeDaMistura(int litrosCombustivel){
+		final int ADITIVO_TANQUE = CentroDistribuicao.MAX_ADITIVO / 2 - 1;
+		final int GASOLINA_TANQUE = CentroDistribuicao.MAX_GASOLINA / 2 - 1;
+		final int ALCOOL_TANQUE = CentroDistribuicao.MAX_ALCOOL / 2 - 1;
 		int[] misturaRecebida;
-		short[] misturaEsperada = new short[3];
-		short litrosDivido = (short)(litrosCombustivel / 2);
+		int[] misturaEsperada = new int[3];
 		centro = new CentroDistribuicao(ADITIVO_TANQUE, GASOLINA_TANQUE, ALCOOL_TANQUE , ALCOOL_TANQUE);
-		misturaEsperada[0] = (short)(ADITIVO_TANQUE - litrosDivido * 0.05);
-		misturaEsperada[1] = (short)(GASOLINA_TANQUE - litrosDivido * 0.7);
-		misturaEsperada[2] = (short)(ALCOOL_TANQUE - litrosDivido * 0.125);
+		SITUACAO situacao =  centro.getSituacao();
+		misturaEsperada[0] = (int)(ADITIVO_TANQUE  - (litrosCombustivel / 2) * 0.05);
+		misturaEsperada[1] = (int)(GASOLINA_TANQUE - (litrosCombustivel / 2) * 0.7);
+		misturaEsperada[2] = (int)(ALCOOL_TANQUE   - (litrosCombustivel / 2) * 0.125);
 
 		misturaRecebida = centro.encomendaCombustivel(litrosCombustivel, TIPOPOSTO.COMUM);
 
-		Assert.assertEquals(misturaRecebida.length, 4);
-		Assert.assertEquals(misturaRecebida[0], misturaEsperada[0]);
-		Assert.assertEquals(misturaRecebida[1], misturaEsperada[1]);
-		Assert.assertEquals(misturaRecebida[2], misturaEsperada[2]);
-		Assert.assertEquals(misturaRecebida[3], misturaEsperada[2]);
+		Assert.assertEquals(SITUACAO.SOBRAVISO, situacao);
+		Assert.assertEquals(4, misturaRecebida.length);
+		Assert.assertEquals(misturaEsperada[0], misturaRecebida[0]);
+		Assert.assertEquals(misturaEsperada[1], misturaRecebida[1]);
+		Assert.assertEquals(misturaEsperada[2], misturaRecebida[2]);
+		Assert.assertEquals(misturaEsperada[2], misturaRecebida[3]);
+	}
+
+	@ParameterizedTest
+	@ValueSource(ints = {2, 3, 4, 5, 6, 7, 8 , 9, 10, 25, 50, 75, 100, 1000})
+	void encomendaCombustivelQtValidaSSobreavisoPEstrategicoAdquireMistura(int litrosCombustivel){
+		final int ADITIVO_TANQUE  = CentroDistribuicao.MAX_ADITIVO / 2;
+		final int GASOLINA_TANQUE = CentroDistribuicao.MAX_GASOLINA / 2 - 1;
+		final int ALCOOL_TANQUE   = CentroDistribuicao.MAX_ALCOOL / 2 - 1;
+		int[] misturaRecebida;
+		int[] misturaEsperada = new int[3];
+		centro = new CentroDistribuicao(ADITIVO_TANQUE, GASOLINA_TANQUE, ALCOOL_TANQUE, ALCOOL_TANQUE);
+		SITUACAO situacao =  centro.getSituacao();
+
+		misturaEsperada[0] = (int)(ADITIVO_TANQUE  - litrosCombustivel * 0.05);
+		misturaEsperada[1] = (int)(GASOLINA_TANQUE - litrosCombustivel * 0.7);
+		misturaEsperada[2] = (int)(ALCOOL_TANQUE   - litrosCombustivel * 0.125);
+
+		misturaRecebida = centro.encomendaCombustivel(litrosCombustivel, TIPOPOSTO.ESTRATEGICO);
+
+		Assert.assertEquals(SITUACAO.SOBRAVISO, situacao);
+		Assert.assertEquals(4, misturaRecebida.length);
+		Assert.assertEquals(misturaEsperada[0], misturaRecebida[0]);
+		Assert.assertEquals(misturaEsperada[1], misturaRecebida[1]);
+		Assert.assertEquals(misturaEsperada[2], misturaRecebida[2]);
+		Assert.assertEquals(misturaEsperada[2], misturaRecebida[3]);
 	}
 
 	@Test
-	void encomendaCombustivelQtValidaSituacaoEmergenciaPostoComum(){
-		final short ADITIVO_TANQUE = (short)(CentroDistribuicao.MAX_ADITIVO * 0.25);
-		final short ALCOOL_TANQUE  = (short)CentroDistribuicao.MAX_ALCOOL / 2;
+	void encomendaCombustivelQtValidaSSobreavisoPComumNaoAdquireMisturaCodigoPraSituaco(){
+		final int ALCOOL_TANQUE = CentroDistribuicao.MAX_ALCOOL / 2;
 		int[] misturaRecebida;
-		byte litrosCombustivel = 1;
-		short[] misturaEsperada = new short[] {-14};
-		centro = new CentroDistribuicao(ADITIVO_TANQUE, CentroDistribuicao.MAX_GASOLINA, ALCOOL_TANQUE, ALCOOL_TANQUE);
-		misturaRecebida = centro.encomendaCombustivel(litrosCombustivel, TIPOPOSTO.COMUM);
+		int[] misturaEsperada = new int[] {-14};
+		centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2 - 1, CentroDistribuicao.MAX_GASOLINA, ALCOOL_TANQUE, ALCOOL_TANQUE);
+		misturaRecebida = centro.encomendaCombustivel(1, TIPOPOSTO.COMUM);
+		SITUACAO situacao =  centro.getSituacao();
 
-		Assert.assertEquals(misturaRecebida.length, 1);
-		Assert.assertEquals(misturaRecebida[0], misturaEsperada[0]);
+		Assert.assertEquals(SITUACAO.SOBRAVISO, situacao);
+		Assert.assertEquals(1, misturaRecebida.length);
+		Assert.assertEquals(misturaEsperada[0], misturaRecebida[0]);
 	}
+	
 	@Test
-	void encomendaCombustivelQtInvalidaSituacao(){
-		final short ADITIVO_TANQUE = (short)(CentroDistribuicao.MAX_ADITIVO * 0.25);
-		final short ALCOOL_TANQUE  = (short)CentroDistribuicao.MAX_ALCOOL / 2;
+	void encomendaCombustivelQtValidaSSobreavisoPComumNaoAdquireMistura(){
+		final int ADITIVO_TANQUE = CentroDistribuicao.MAX_ADITIVO / 2 - 1;
+		final int ALCOOL_TANQUE  = (int)CentroDistribuicao.MAX_ALCOOL / 2;
 		int[] misturaRecebida;
-		byte litrosCombustivel = -1;
-		short[] misturaEsperada = new short[] {-7};
+		int[] misturaEsperada = new int[] {-14};
 		centro = new CentroDistribuicao(ADITIVO_TANQUE, CentroDistribuicao.MAX_GASOLINA, ALCOOL_TANQUE, ALCOOL_TANQUE);
+		SITUACAO situacao =  centro.getSituacao();
+		misturaRecebida = centro.encomendaCombustivel(1, TIPOPOSTO.COMUM);
+		
+		Assert.assertEquals(SITUACAO.SOBRAVISO, situacao);
+		Assert.assertEquals(1, misturaRecebida.length);
+		Assert.assertEquals(misturaEsperada[0], misturaRecebida[0]);
+	}
+
+	@ParameterizedTest
+	@ValueSource(ints = {2, 3, 4, 5, 6, 7, 8 , 9, 10, 25, 50, 75, 100, 1000})
+	void encomendaCombustivelQtValidaSEmergenciaPEstrategicoAdquireMistura(int litrosCombustivel){
+		final int ADITIVO_TANQUE  = (int)(CentroDistribuicao.MAX_ADITIVO  * 0.25)  - 1;
+		final int ALCOOL_TANQUE   = (int)(CentroDistribuicao.MAX_ALCOOL   * 0.125) - 1;
+		final int GASOLINA_TANQUE = (int)(CentroDistribuicao.MAX_GASOLINA * 0.25)  - 1;
+		int[] misturaRecebida;
+		int[] misturaEsperada = new int[3];
+		misturaEsperada[0] = (int)(ADITIVO_TANQUE  - litrosCombustivel * 0.05);
+		misturaEsperada[1] = (int)(GASOLINA_TANQUE - litrosCombustivel * 0.7);
+		misturaEsperada[2] = (int)(ALCOOL_TANQUE   - litrosCombustivel * 0.125);
+		centro = new CentroDistribuicao(ADITIVO_TANQUE, GASOLINA_TANQUE, ALCOOL_TANQUE, ALCOOL_TANQUE);
+		SITUACAO situacao =  centro.getSituacao();
+		misturaRecebida = centro.encomendaCombustivel(litrosCombustivel, TIPOPOSTO.ESTRATEGICO);
+		
+		Assert.assertEquals(SITUACAO.EMERGENCIA, situacao);
+		Assert.assertEquals(4, misturaRecebida.length);
+		Assert.assertEquals(misturaEsperada[0], misturaRecebida[0]);
+		Assert.assertEquals(misturaEsperada[1], misturaRecebida[1]);
+		Assert.assertEquals(misturaEsperada[2], misturaRecebida[2]);
+		Assert.assertEquals(misturaEsperada[2], misturaRecebida[3]);
+	}
+
+	@Test
+	void encomendaCombustivelQtValidaAdquireMisturaMudaSituacao(){
+		final int ALCOOL_TANQUE = (int)(CentroDistribuicao.MAX_ALCOOL * 0.25);
+		centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO / 2, CentroDistribuicao.MAX_GASOLINA / 2, ALCOOL_TANQUE, ALCOOL_TANQUE);
+		SITUACAO situacaoAntes  = centro.getSituacao();
+		
+		centro.encomendaCombustivel(1000, TIPOPOSTO.COMUM);
+		
+		Assert.assertNotEquals(situacaoAntes, centro.getSituacao());
+	}
+
+	@Test
+	void encomendaCombustivelQtValidaPoucaMisturaNaoSEmergenciaPEstrategicoNaoAdquireMistura(){
+		final int ADITIVO_TANQUE  = (int)(CentroDistribuicao.MAX_ADITIVO * 0.25) + 1;
+		final int ALCOOL_TANQUE   = (int)CentroDistribuicao.MAX_ALCOOL / 2;
+		final int GASOLINA_TANQUE = CentroDistribuicao.MAX_GASOLINA;
+		int[] misturaRecebida;
+		int[] misturaEsperada = new int[] {-21};
+		centro = new CentroDistribuicao(ADITIVO_TANQUE, GASOLINA_TANQUE, ALCOOL_TANQUE, ALCOOL_TANQUE);
+		misturaRecebida = centro.encomendaCombustivel(5000, TIPOPOSTO.ESTRATEGICO);
+		
+		Assert.assertNotEquals(SITUACAO.EMERGENCIA, centro.getSituacao());
+		Assert.assertEquals(1, misturaRecebida.length);
+		Assert.assertEquals(misturaEsperada[0], misturaRecebida[0]);
+		Assert.assertEquals(ADITIVO_TANQUE, centro.getTanAditivo());
+		Assert.assertEquals(GASOLINA_TANQUE, centro.getTanGasolina());
+		Assert.assertEquals(ALCOOL_TANQUE, centro.getTanAlcool1());
+		Assert.assertEquals(ALCOOL_TANQUE, centro.getTanAlcool2());
+	}
+	
+	@Test
+	void encomendaCombustivelQtInvalidaCodigoPraQt(){
+		final int ALCOOL_TANQUE  = CentroDistribuicao.MAX_ALCOOL / 2 - 1;
+		int[] misturaRecebida;
+		int[] misturaEsperada = new int[] {-7};
+		centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO, CentroDistribuicao.MAX_GASOLINA, ALCOOL_TANQUE, ALCOOL_TANQUE);
+		misturaRecebida = centro.encomendaCombustivel(-1, TIPOPOSTO.COMUM);
+
+		Assert.assertEquals(1, misturaRecebida.length);
+		Assert.assertEquals(misturaEsperada[0], misturaRecebida[0]);
+	}
+	
+	@Test
+	void encomendaCombustivelQtValidaNaoAdquireMisturaCodigoPraFaltaDeMistura(){
+		final int ALCOOL_TANQUE = CentroDistribuicao.MAX_ALCOOL / 2;
+		int[] misturaRecebida;
+		int litrosCombustivel = Integer.MAX_VALUE;
+		int[] misturaEsperada = new int[] {-21};
+		centro = new CentroDistribuicao(CentroDistribuicao.MAX_ADITIVO, CentroDistribuicao.MAX_GASOLINA, ALCOOL_TANQUE, ALCOOL_TANQUE);
 		misturaRecebida = centro.encomendaCombustivel(litrosCombustivel, TIPOPOSTO.COMUM);
 
-		Assert.assertEquals(misturaRecebida.length, 1);
-		Assert.assertEquals(misturaRecebida[0], misturaEsperada[0]);
+		Assert.assertEquals(1, misturaRecebida.length);
+		Assert.assertEquals(misturaEsperada[0], misturaRecebida[0]);
 	}
 	//#endregion
+
 	//#region métodos úteis
 	private int[] GetValoresTesteLimite(SITUACAO situacao){
 		int[] retorno = new int[4];

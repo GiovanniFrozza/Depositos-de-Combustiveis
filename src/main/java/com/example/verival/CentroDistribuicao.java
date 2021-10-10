@@ -21,7 +21,7 @@ public class CentroDistribuicao {
     public CentroDistribuicao(int tAditivo, int tGasolina, int tAlcool1, int tAlcool2) {
         int totalAlcool = tAlcool2 + tAlcool1;
 
-        if(tAditivo > MAX_ADITIVO || tGasolina > MAX_GASOLINA || totalAlcool > MAX_ALCOOL)
+        if(tAditivo > MAX_ADITIVO || tGasolina > MAX_GASOLINA || totalAlcool > MAX_ALCOOL || tAditivo < 0 || tGasolina < 0 || totalAlcool < 0)
             throw new InvalidParameterException("Infração no limite de capacidade de um ou mais tanques do Centro de Distribuição");
 
         this.tanAditivo = tAditivo;   
@@ -110,20 +110,19 @@ public class CentroDistribuicao {
         
         return combustivelTanques;
     }
-    private boolean consegueCombustivel(int qtdadeGas, TIPOPOSTO tipoPosto){
-        qtdadeGas *= 100;
-        int aditivo = (int) (qtdadeGas * 0.05);
-        int gasolina = (int) (qtdadeGas * 0.7); 
-        int alcool = (int) (qtdadeGas * 0.25);
+    private boolean consegueCombustivel(int qtdade, TIPOPOSTO tipoPosto){
+        int aditivoMistura  = (int)(tanAditivo - qtdade * 0.05); // tudo divido por 100
+        int gasolinaMistura = (int)(tanGasolina - qtdade * 0.7); // tudo divido por 100
+        int alcoolMistura   = (int)((tanAlcool2 + tanAlcool1) - qtdade * 0.25); // tudo divido por 100
         boolean consegueMistura = false;
 
-        if(tanGasolina * 100 - gasolina >= 0 && (tanAlcool2 + tanAlcool1) * 100 - alcool >= 0){
-            if(tanAditivo * 100 - aditivo >= 0){
-                retiraCombustivel(aditivo, gasolina, alcool);
+        if(gasolinaMistura >= 0 && alcoolMistura >= 0){
+            if(aditivoMistura >= 0){
+                retiraCombustivel(aditivoMistura, gasolinaMistura, alcoolMistura);
                 consegueMistura = true;
             }
             else if(tipoPosto == TIPOPOSTO.ESTRATEGICO && situacao == SITUACAO.EMERGENCIA){
-                retiraCombustivel(0, gasolina, alcool);
+                retiraCombustivel(tanAditivo, gasolinaMistura, alcoolMistura);
                 consegueMistura = true;
             }
         }
@@ -131,15 +130,9 @@ public class CentroDistribuicao {
     }
 
     private void retiraCombustivel(int aditivo, int gasolina, int alcool) {
-        tanAditivo *= 100;
-        tanGasolina *= 100;
-        tanAditivo -= aditivo;
-        tanGasolina -= gasolina;
-        int totalAlcool = (tanAlcool2 + tanAlcool1) * 100 - alcool;
-
-        tanAditivo /= 100;
-        tanGasolina /= 100;
-        tanAlcool2 = tanAlcool1 = totalAlcool /= 200;
+        tanAditivo = aditivo;
+        tanGasolina = gasolina;
+        tanAlcool2 = tanAlcool1 = alcool / 2;
         defineSituacao();
     }
         
