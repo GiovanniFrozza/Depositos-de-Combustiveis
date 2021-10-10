@@ -12,7 +12,7 @@ Para realizar os Casos de Testes foi construído três tabelas no Excel com os T
 
 ## Testes de Partição
 
-![teste_limite](img/teste1.png)
+
 
 
 ## Testes Limite
