@@ -2,6 +2,6 @@
 
 ## Prof. Bernardo Copstein
 
-### Integrantes:  Gabriel Velloso, Giovanni Frozza, Matheus
+### Integrantes:  Gabriel Velloso, Giovanni Frozza, Matheus Hrymalak
 
 ---
