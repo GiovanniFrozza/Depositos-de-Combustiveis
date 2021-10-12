@@ -1,0 +1,19 @@
+centroDistribuicaoJogaExcecaoBaseadoNoLimiteDosTanques ✅
+
+encomendaCombustivel:
+	QtdataValida
+		SituacaoNormal
+			AdquireMistura ✅
+		SituacaoSobreaviso
+			PEstrategico
+				AdquireMistura✅
+				NãoAdquireMistura(sem aditivo & situação != Emergencia)✅
+			PComum
+				AdquireMetadeDaMistura✅
+				NãoAdquireMistura(Qt == 1) ✅
+		SituacaoEmergencia
+			PEstrategicoAdquireMistura✅
+			PComumNAdquireMistura ✅
+		NãoAdquireMistura(Qt > resultado da soma das mistura) ✅
+		AdquireMisturaMudaSituacao ✅
+	QtdataInvalida ✅
