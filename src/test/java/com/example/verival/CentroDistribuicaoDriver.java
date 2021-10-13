@@ -43,8 +43,10 @@ class CentroDistribuicaoDriver {
 
     @Test
     void defineSituacaoOffPointNormal() {
-        int[] valoresTeste =  GetValoresTesteLimite(SITUACAO.SOBRAVISO);
-        int tAlcoolMetade = CentroDistribuicao.MAX_ALCOOL / 2;
+	int tAlcoolMetade = CentroDistribuicao.MAX_ALCOOL / 2;
+    int[] valoresTeste =  new int[]{CentroDistribuicao.MAX_ADITIVO / 2  -1,
+        CentroDistribuicao.MAX_GASOLINA / 2  -1, tAlcoolMetade / 2 - 1, tAlcoolMetade / 2 - 1};
+				
         centro = new CentroDistribuicao(valoresTeste[0], CentroDistribuicao.MAX_GASOLINA, tAlcoolMetade, tAlcoolMetade);
         Assert.assertNotEquals(CentroDistribuicao.SITUACAO.NORMAL, centro.getSituacao());
 
